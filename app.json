@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "CUPAD",
+    "slug": "cupad-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "cupad",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ng.name.cupad.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#3B82F6"
+      },
+      "package": "ng.name.cupad.mobile"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiBaseUrl": "https://cupad.name.ng/api/v1",
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}
