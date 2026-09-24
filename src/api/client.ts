@@ -38,11 +38,33 @@ class ApiClient {
   async getTransactions(clientId:string):Promise<Transaction[]>{const{data}=await this.client.get<ApiResponse<Transaction[]>>(`/clients/${encodeURIComponent(clientId)}/transactions`);return data.data||[]}
   async getDashboardStats():Promise<any|null>{const{data}=await this.client.get<{success:boolean;data:any}>('/dashboard/stats');return data.success?data.data:null}
   async getActivities(limit=30):Promise<any[]>{const{data}=await this.client.get<ApiResponse<any[]>>('/activities',{params:{limit}});return data.data||[]}
-  async getCombinedUnionData(union:string,date:string):Promise<any[]>{const{data}=await this.client.get<any>('/combined/union-data',{params:{union,date}});const rows=Array.isArray(data?.data)?data.data:[];if(data?.settings)Object.defineProperty(rows,'__settings',{value:data.settings,enumerable:false,configurable:true});return rows}
+  async getCombinedUnionData(union:string,date:string):Promise<any[]>{
+    // The combined endpoint can apply a stricter union/assignment filter than /clients.
+    // Load the authorized active client list first, request the combined register without
+    // a union restriction, then apply the exact union selected by the mobile UI locally.
+    const [response, authorizedClients] = await Promise.all([
+      this.client.get<any>('/combined/union-data',{params:{union:'',date}}),
+      this.getAllClients()
+    ]);
+    const data=response.data;
+    const rows=Array.isArray(data?.data)?data.data:[];
+    const normalizedUnion=String(union||'').trim().toLowerCase();
+    const allowedIds=new Set(
+      authorizedClients
+        .filter(client=>{
+          const clientUnion=String(client.union??'').trim().toLowerCase();
+          return normalizedUnion==='' ? true : (normalizedUnion==='unassigned' ? clientUnion==='' : clientUnion===normalizedUnion);
+        })
+        .map(client=>String(client.id))
+    );
+    const filteredRows=normalizedUnion===''?rows:rows.filter(row=>allowedIds.has(String(row.id)));
+    if(data?.settings)Object.defineProperty(filteredRows,'__settings',{value:data.settings,enumerable:false,configurable:true});
+    return filteredRows;
+  }
   async saveCombinedCollection(payload:{client_id:string;date:string;installment:number;savings_amount:number;withdrawal_type:string;withdrawal_amount:number;notes?:string}){const{data}=await this.client.post('/combined/save',payload);return data}
   async collectSavings(payload:{client_id:string;amount:number;date?:string;notes?:string}){const{data}=await this.client.post('/savings/collect',payload);return data}
   async withdrawSavings(payload:{client_id:string;amount:number;notes?:string;reason?:string}){const{data}=await this.client.post('/savings/withdraw',payload);return data}
-  async collectLoan(payload:{client_id:string;amount:number;notes?:string;loan_id?:string|number}){const{data}=await this.client.post('/loans/collect',payload);return data}
+  async collectLoan(payload:{client_id:string;amount:number;date?:string;notes?:string;loan_id?:string|number}){const{data}=await this.client.post('/loans/collect',payload);return data}
   async disburseLoan(payload:{client_id:string;principal:number;interest_rate:number;num_installments:number;loan_term_type:string}){const{data}=await this.client.post('/loans/disburse',payload);return data}
   async registerClient(payload:{name:string;phone:string;email?:string;address?:string;client_type?:string;registration_fee?:number}){const{data}=await this.client.post('/clients/register',payload);return data}
   async health():Promise<boolean>{try{const{data}=await this.client.get('/health');return data.success===true}catch{return false}}
