@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View } from 'react-native';
+﻿import { Image, Pressable, Text, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/auth';
@@ -35,7 +35,7 @@ export default function CoLayout() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.card, elevation: 0, shadowOpacity: 0, height: 62, borderBottomWidth: 1, borderBottomColor: colors.border },
+          headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.primary,
           headerShadowVisible: false,
           headerTitleAlign: 'left',
@@ -96,3 +96,5 @@ export default function CoLayout() {
     </View>
   );
 }
+
+
